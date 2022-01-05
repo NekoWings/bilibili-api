@@ -144,7 +144,7 @@ class LiveRoom:
         """
         api = API["info"]["chat_conf"]
         params = {
-            "room_id": self.room_display_id
+            "id": self.room_display_id
         }
         return await request(api['method'], api["url"], params, credential=self.credential)
 
@@ -696,7 +696,7 @@ class LiveDanmaku(AsyncEvent):
         # 连接直播间
         self.logger.debug("准备连接直播间")
         session = get_session()
-        available_hosts: List[dict] = conf["host_server_list"]
+        available_hosts: List[dict] = conf["host_list"]
         retry = self.max_retry
         host = None
 
