@@ -433,7 +433,8 @@ class LiveRoom:
             "room_id": self.room_display_id,
         }
         res_room_info = await request(api_room_info['method'], api_room_info["url"], params=params_room_info, credential=self.credential)
-        area_id, area_parent_id = res_room_info["room_info"]["area_id"], res_room_info["room_info"]["parent_area_id"]
+        area_id, area_parent_id = res_room_info["room_info"][
+            "area_id"], res_room_info["room_info"]["parent_area_id"]
 
         api = API["info"]["gift_common"]
         params = {
@@ -457,7 +458,8 @@ class LiveRoom:
             "room_id": self.room_display_id,
         }
         res_room_info = await request(api_room_info['method'], api_room_info["url"], params=params_room_info, credential=self.credential)
-        area_id, area_parent_id = res_room_info["room_info"]["area_id"], res_room_info["room_info"]["parent_area_id"]
+        area_id, area_parent_id = res_room_info["room_info"][
+            "area_id"], res_room_info["room_info"]["parent_area_id"]
 
         api = API["info"]["gift_special"]
 
@@ -833,7 +835,8 @@ class LiveDanmaku(AsyncEvent):
         """
         定时发送心跳包
         """
-        HEARTBEAT = self.__pack(b'[object Object]', self.PROTOCOL_VERSION_HEARTBEAT, self.DATAPACK_TYPE_HEARTBEAT)
+        HEARTBEAT = self.__pack(
+            b'[object Object]', self.PROTOCOL_VERSION_HEARTBEAT, self.DATAPACK_TYPE_HEARTBEAT)
         while True:
             if self.__heartbeat_timer == 0:
                 self.logger.debug("发送心跳包")
@@ -1013,6 +1016,7 @@ async def get_area_info():
     api = API["info"]["area_info"]
     return await request(api['method'], api["url"])
 
+
 async def get_live_followers_info(need_recommend: bool = True, credential: Credential = None):
     """
     获取关注列表中正在直播的直播间信息，包括房间直播热度，房间名称及标题，清晰度，是否官方认证等信息。
@@ -1031,6 +1035,7 @@ async def get_live_followers_info(need_recommend: bool = True, credential: Crede
         "filterRule": 0
     }
     return await request(api['method'], api["url"], params=params, credential=credential)
+
 
 async def get_unlive_followers_info(page: int = 1, page_size: int = 30, credential: Credential = None):
     """
