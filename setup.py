@@ -14,7 +14,7 @@ setuptools.setup(
     description='哔哩哔哩的各种 API 调用便捷整合（视频、动态、直播等），另外附加一些常用的功能。',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    packages=["bilibili_api"],
+    packages=setuptools.find_packages(exclude=["tests"]),
     keywords=[
         "bilibili",
         "api",
@@ -30,5 +30,6 @@ setuptools.setup(
     data_files=["requirements.txt"],
     install_requires=requires.splitlines(),
     url="https://github.com/MoyuScript/bilibili-api",
-    python_requires=">=3.8"
+    python_requires=">=3.8",
+    include_package_data=True
 )
