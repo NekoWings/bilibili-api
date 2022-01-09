@@ -4,8 +4,8 @@ bilibili_api.utils.AsyncEvent
 发布-订阅模式异步事件类支持。
 """
 
-from typing import Any, Coroutine
 import asyncio
+from typing import Any, Coroutine
 
 
 class AsyncEvent:
@@ -42,6 +42,9 @@ class AsyncEvent:
             return func
 
         return decorator
+
+    def remove_all_event_listener(self):
+        self.__handlers = {}
 
     def remove_event_listener(self, name: str, handler: Coroutine):
         """

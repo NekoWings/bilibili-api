@@ -3,25 +3,25 @@ bilibili_api.live
 
 直播相关
 """
+import asyncio
+import base64
+import json
+import logging
+import struct
 import time
 from enum import Enum
-import logging
-import json
-import struct
-import base64
-import asyncio
 from typing import List
+
 import aiohttp
 import brotli
-
 from aiohttp.client_ws import ClientWebSocketResponse
 
+from .exceptions.LiveException import LiveException
+from .utils.AsyncEvent import AsyncEvent
 from .utils.Credential import Credential
+from .utils.Danmaku import Danmaku
 from .utils.network import get_session, request
 from .utils.utils import get_api
-from .utils.Danmaku import Danmaku
-from .utils.AsyncEvent import AsyncEvent
-from .exceptions.LiveException import LiveException
 
 API = get_api("live")
 
@@ -39,6 +39,7 @@ class ScreenResolution(Enum):
     + HD            : 高清。
     + FLUENCY       : 流畅。
     """
+
     FOUR_K = 20000
     ORIGINAL = 10000
     BLU_RAY_DOLBY = 401
@@ -57,9 +58,10 @@ class LiveProtocol(Enum):
     + HLS     : 1。
     + DEFAULT : 0,1
     """
+
     FLV = 0
     HLS = 1
-    DEFAULT = '0,1'
+    DEFAULT = "0,1"
 
 
 class LiveFormat(Enum):
@@ -72,10 +74,11 @@ class LiveFormat(Enum):
     + FMP4      : 2。
     + DEFAULT   : 2。
     """
+
     FLV = 0
     TS = 1
     FMP4 = 2
-    DEFAULT = '0,1,2'
+    DEFAULT = "0,1,2"
 
 
 class LiveCodec(Enum):
@@ -87,9 +90,10 @@ class LiveCodec(Enum):
     + HEVC      : 1。
     + DEFAULT   : 0,1。
     """
+
     AVC = 0
     HEVC = 1
-    DEFAULT = '0,1'
+    DEFAULT = "0,1"
 
 
 class LiveRoom:
@@ -120,13 +124,16 @@ class LiveRoom:
             API 调用返回结果
         """
         api = API["info"]["room_play_info"]
+        print("in api:", api, API)
         params = {
             "room_id": self.room_display_id,
         }
-        resp = await request(api['method'], api['url'], params=params, credential=self.credential)
+        resp = await request(
+            api["method"], api["url"], params=params, credential=self.credential
+        )
 
         # 缓存真实房间 ID
-        self.__ruid = resp['uid']
+        self.__ruid = resp["uid"]
         return resp
 
     async def __get_ruid(self):
@@ -143,20 +150,20 @@ class LiveRoom:
         获取聊天弹幕服务器配置信息(websocket)
         """
         api = API["info"]["chat_conf"]
-        params = {
-            "id": self.room_display_id
-        }
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        params = {"id": self.room_display_id}
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
     async def get_room_info(self):
         """
         获取直播间信息（标题，简介等）
         """
         api = API["info"]["room_info"]
-        params = {
-            "room_id": self.room_display_id
-        }
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        params = {"room_id": self.room_display_id}
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
     async def get_user_info_in_room(self):
         """
@@ -165,10 +172,10 @@ class LiveRoom:
         self.credential.raise_for_no_sessdata()
 
         api = API["info"]["user_info_in_room"]
-        params = {
-            "room_id": self.room_display_id
-        }
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        params = {"room_id": self.room_display_id}
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
     async def get_dahanghai(self, page: int = 1):
         """
@@ -182,9 +189,11 @@ class LiveRoom:
             "roomid": self.room_display_id,
             "ruid": await self.__get_ruid(),
             "page_size": 30,
-            "page": page
+            "page": page,
         }
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
     async def get_gaonengbang(self, page: int = 1):
         """
@@ -198,9 +207,11 @@ class LiveRoom:
             "roomId": self.room_display_id,
             "ruid": await self.__get_ruid(),
             "pageSize": 50,
-            "page": page
+            "page": page,
         }
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
     async def get_seven_rank(self):
         """
@@ -211,18 +222,19 @@ class LiveRoom:
             "roomid": self.room_display_id,
             "ruid": await self.__get_ruid(),
         }
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
     async def get_fans_medal_rank(self):
         """
         获取粉丝勋章排行
         """
         api = API["info"]["fans_medal_rank"]
-        params = {
-            "roomid": self.room_display_id,
-            "ruid": await self.__get_ruid()
-        }
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        params = {"roomid": self.room_display_id, "ruid": await self.__get_ruid()}
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
     async def get_black_list(self):
         """
@@ -232,14 +244,15 @@ class LiveRoom:
             page (int, optional): 页码. Defaults to 1
         """
         api = API["info"]["black_list"]
-        params = {
-            "room_id": self.room_display_id,
-            "ps": 1
-        }
+        params = {"room_id": self.room_display_id, "ps": 1}
 
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
-    async def get_room_play_url(self, screen_resolution: ScreenResolution = ScreenResolution.ORIGINAL):
+    async def get_room_play_url(
+        self, screen_resolution: ScreenResolution = ScreenResolution.ORIGINAL
+    ):
         """
         获取房间直播流列表
 
@@ -252,14 +265,19 @@ class LiveRoom:
             "platform": "web",
             "qn": screen_resolution.value,
             "https_url_req": "1",
-            "ptype": "16"
+            "ptype": "16",
         }
-        return await request(api['method'], api["url"], params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params, credential=self.credential
+        )
 
-    async def get_room_play_info_v2(self, live_protocol: LiveProtocol = LiveProtocol.DEFAULT,
-                                    live_format: LiveFormat = LiveFormat.DEFAULT,
-                                    live_codec: LiveCodec = LiveCodec.DEFAULT,
-                                    live_qn: ScreenResolution = ScreenResolution.ORIGINAL):
+    async def get_room_play_info_v2(
+        self,
+        live_protocol: LiveProtocol = LiveProtocol.DEFAULT,
+        live_format: LiveFormat = LiveFormat.DEFAULT,
+        live_codec: LiveCodec = LiveCodec.DEFAULT,
+        live_qn: ScreenResolution = ScreenResolution.ORIGINAL,
+    ):
         """
         获取房间信息及可用清晰度列表
 
@@ -277,9 +295,11 @@ class LiveRoom:
             "protocol": live_protocol.value,
             "format": live_format.value,
             "codec": live_codec.value,
-            "qn": live_qn.value
+            "qn": live_qn.value,
         }
-        return await request(api['method'], api['url'], params=params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params=params, credential=self.credential
+        )
 
     async def ban_user(self, uid: int):
         """
@@ -295,9 +315,11 @@ class LiveRoom:
             "room_id": self.room_display_id,
             "tuid": uid,
             "mobile_app": "web",
-            "visit_id": ""
+            "visit_id": "",
         }
-        return await request(api['method'], api["url"], data=data, credential=self.credential)
+        return await request(
+            api["method"], api["url"], data=data, credential=self.credential
+        )
 
     async def unban_user(self, block_id: int):
         """
@@ -313,7 +335,9 @@ class LiveRoom:
             "id": block_id,
             "visit_id": "",
         }
-        return await request(api['method'], api["url"], data=data, credential=self.credential)
+        return await request(
+            api["method"], api["url"], data=data, credential=self.credential
+        )
 
     async def send_danmaku(self, danmaku: Danmaku):
         """
@@ -332,9 +356,11 @@ class LiveRoom:
             "bubble": 0,
             "rnd": int(time.time()),
             "color": int(danmaku.color, 16),
-            "fontsize": danmaku.font_size.value
+            "fontsize": danmaku.font_size.value,
         }
-        return await request(api['method'], api["url"], data=data, credential=self.credential)
+        return await request(
+            api["method"], api["url"], data=data, credential=self.credential
+        )
 
     async def sign_up_dahanghai(self, task_id: int = 1447):
         """
@@ -351,15 +377,19 @@ class LiveRoom:
             "task_id": task_id,
             "uid": await self.__get_ruid(),
         }
-        return await request(api['method'], api["url"], data=data, credential=self.credential)
+        return await request(
+            api["method"], api["url"], data=data, credential=self.credential
+        )
 
-    async def send_gift_from_bag(self,
-                                 uid: int,
-                                 bag_id: int,
-                                 gift_id: int,
-                                 gift_num: int,
-                                 storm_beat_id: int = 0,
-                                 price: int = 0):
+    async def send_gift_from_bag(
+        self,
+        uid: int,
+        bag_id: int,
+        gift_id: int,
+        gift_num: int,
+        storm_beat_id: int = 0,
+        price: int = 0,
+    ):
         """
         赠送包裹中的礼物，获取包裹信息可以使用 get_self_bag 方法
 
@@ -387,9 +417,10 @@ class LiveRoom:
             "biz_code": "live",
             "biz_id": self.room_display_id,
             "ruid": await self.__get_ruid(),
-
         }
-        return await request(api['method'], api["url"], data=data, credential=self.credential)
+        return await request(
+            api["method"], api["url"], data=data, credential=self.credential
+        )
 
     async def receive_reward(self, receive_type: int = 2):
         """
@@ -405,7 +436,9 @@ class LiveRoom:
             "ruid": await self.__get_ruid(),
             "receive_type": receive_type,
         }
-        return await request(api['method'], api["url"], data=data, credential=self.credential)
+        return await request(
+            api["method"], api["url"], data=data, credential=self.credential
+        )
 
     async def get_general_info(self, act_id: int = 100061):
         """
@@ -420,9 +453,11 @@ class LiveRoom:
         params = {
             "actId": act_id,
             "roomId": self.room_display_id,
-            "uid": await self.__get_ruid()
+            "uid": await self.__get_ruid(),
         }
-        return await request(api['method'], api["url"], params=params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params=params, credential=self.credential
+        )
 
     async def get_gift_common(self):
         """
@@ -432,9 +467,16 @@ class LiveRoom:
         params_room_info = {
             "room_id": self.room_display_id,
         }
-        res_room_info = await request(api_room_info['method'], api_room_info["url"], params=params_room_info, credential=self.credential)
-        area_id, area_parent_id = res_room_info["room_info"][
-            "area_id"], res_room_info["room_info"]["parent_area_id"]
+        res_room_info = await request(
+            api_room_info["method"],
+            api_room_info["url"],
+            params=params_room_info,
+            credential=self.credential,
+        )
+        area_id, area_parent_id = (
+            res_room_info["room_info"]["area_id"],
+            res_room_info["room_info"]["parent_area_id"],
+        )
 
         api = API["info"]["gift_common"]
         params = {
@@ -442,9 +484,11 @@ class LiveRoom:
             "area_id": area_id,
             "area_parent_id": area_parent_id,
             "platform": "pc",
-            "source": "live"
+            "source": "live",
         }
-        return await request(api['method'], api["url"], params=params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params=params, credential=self.credential
+        )
 
     async def get_gift_special(self, tab_id: int):
         """
@@ -457,9 +501,16 @@ class LiveRoom:
         params_room_info = {
             "room_id": self.room_display_id,
         }
-        res_room_info = await request(api_room_info['method'], api_room_info["url"], params=params_room_info, credential=self.credential)
-        area_id, area_parent_id = res_room_info["room_info"][
-            "area_id"], res_room_info["room_info"]["parent_area_id"]
+        res_room_info = await request(
+            api_room_info["method"],
+            api_room_info["url"],
+            params=params_room_info,
+            credential=self.credential,
+        )
+        area_id, area_parent_id = (
+            res_room_info["room_info"]["area_id"],
+            res_room_info["room_info"]["parent_area_id"],
+        )
 
         api = API["info"]["gift_special"]
 
@@ -470,16 +521,15 @@ class LiveRoom:
             "room_id": await self.__get_ruid(),
             "source": "live",
             "platform": "pc",
-            "build": 1
+            "build": 1,
         }
-        return await request(api['method'], api["url"], params=params, credential=self.credential)
+        return await request(
+            api["method"], api["url"], params=params, credential=self.credential
+        )
 
-    async def send_gift_gold(self,
-                             uid: int,
-                             gift_id: int,
-                             gift_num: int,
-                             price: int,
-                             storm_beat_id: int = 0):
+    async def send_gift_gold(
+        self, uid: int, gift_id: int, gift_num: int, price: int, storm_beat_id: int = 0
+    ):
 
         """
         赠送金瓜子礼物
@@ -510,16 +560,20 @@ class LiveRoom:
             "coin_type": "gold",
             "bag_id": "0",
             "rnd": int(time.time()),
-            "visit_id": ""
+            "visit_id": "",
         }
-        return await request(api['method'], api["url"], data=data, credential=self.credential)
+        return await request(
+            api["method"], api["url"], data=data, credential=self.credential
+        )
 
-    async def send_gift_silver(self,
-                               uid: int,
-                               gift_id: int,
-                               gift_num: int,
-                               price: int,
-                               storm_beat_id: int = 0,):
+    async def send_gift_silver(
+        self,
+        uid: int,
+        gift_id: int,
+        gift_num: int,
+        price: int,
+        storm_beat_id: int = 0,
+    ):
 
         """
         赠送银瓜子礼物
@@ -550,9 +604,11 @@ class LiveRoom:
             "coin_type": "silver",
             "bag_id": 0,
             "rnd": int(time.time()),
-            "visit_id": ""
+            "visit_id": "",
         }
-        return await request(api['method'], api["url"], data=data, credential=self.credential)
+        return await request(
+            api["method"], api["url"], data=data, credential=self.credential
+        )
 
 
 class LiveDanmaku(AsyncEvent):
@@ -585,6 +641,7 @@ class LiveDanmaku(AsyncEvent):
     + TIMEOUT: 心跳响应超时
     + VERIFICATION_SUCCESSFUL: 认证成功
     """
+
     PROTOCOL_VERSION_RAW_JSON = 0
     PROTOCOL_VERSION_HEARTBEAT = 1
     PROTOCOL_VERSION_BROTLI_JSON = 3
@@ -602,8 +659,14 @@ class LiveDanmaku(AsyncEvent):
     STATUS_CLOSED = 4
     STATUS_ERROR = 5
 
-    def __init__(self, room_display_id: int, debug: bool = False,
-                 credential: Credential = None, max_retry: int = 5, retry_after: float = 1):
+    def __init__(
+        self,
+        room_display_id: int,
+        debug: bool = False,
+        credential: Credential = None,
+        max_retry: int = 5,
+        retry_after: float = 1,
+    ):
         """
         Args:
             room_display_id (int)                 : 房间展示 ID
@@ -625,13 +688,18 @@ class LiveDanmaku(AsyncEvent):
         self.__debug = debug
         self.__heartbeat_timer = 30.0
         self.err_reason = ""
+        self.remove_all_event_listener()
 
         # logging
         self.logger = logging.getLogger(f"LiveDanmaku_{self.room_display_id}")
         self.logger.setLevel(logging.DEBUG if debug else logging.INFO)
+        self.logger.handlers = []
         handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter(
-            "[" + str(room_display_id) + "][%(asctime)s][%(levelname)s] %(message)s"))
+        handler.setFormatter(
+            logging.Formatter(
+                "[" + str(room_display_id) + "][%(asctime)s][%(levelname)s] %(message)s"
+            )
+        )
         self.logger.addHandler(handler)
 
     def get_status(self):
@@ -648,13 +716,13 @@ class LiveDanmaku(AsyncEvent):
         连接直播间
         """
         if self.get_status() == self.STATUS_CONNECTING:
-            raise LiveException('正在建立连接中')
+            raise LiveException("正在建立连接中")
 
         if self.get_status() == self.STATUS_ESTABLISHED:
-            raise LiveException('连接已建立，不可重复调用')
+            raise LiveException("连接已建立，不可重复调用")
 
         if self.get_status() == self.STATUS_CLOSING:
-            raise LiveException('正在关闭连接，不可调用')
+            raise LiveException("正在关闭连接，不可调用")
 
         await self.__main()
 
@@ -663,10 +731,10 @@ class LiveDanmaku(AsyncEvent):
         断开连接
         """
         if self.get_status() != self.STATUS_ESTABLISHED:
-            raise LiveException('尚未连接服务器')
+            raise LiveException("尚未连接服务器")
 
         self.__status = self.STATUS_CLOSING
-        self.logger.info('连接正在关闭')
+        self.logger.info("连接正在关闭")
 
         # 取消所有任务
         while len(self.__tasks) > 0:
@@ -675,7 +743,7 @@ class LiveDanmaku(AsyncEvent):
         self.__status = self.STATUS_CLOSED
         await self.__ws.close()
 
-        self.logger.info('连接已关闭')
+        self.logger.info("连接已关闭")
 
     async def __main(self):
         """
@@ -684,7 +752,7 @@ class LiveDanmaku(AsyncEvent):
         self.__status == self.STATUS_CONNECTING
 
         room = LiveRoom(self.room_display_id, self.credential)
-        self.logger.info(f'准备连接直播间 {self.room_display_id}')
+        self.logger.info(f"准备连接直播间 {self.room_display_id}")
         # 获取真实房间号
         self.logger.debug("正在获取真实房间号")
         self.__room_real_id = (await room.get_room_play_info())["room_id"]
@@ -702,25 +770,25 @@ class LiveDanmaku(AsyncEvent):
         retry = self.max_retry
         host = None
 
-        @self.on('TIMEOUT')
+        @self.on("TIMEOUT")
         async def on_timeout(ev):
             # 连接超时
-            self.err_reason = '心跳响应超时'
+            self.err_reason = "心跳响应超时"
             await self.__ws.close()
 
         while True:
-            self.err_reason = ''
+            self.err_reason = ""
             # 重置心跳计时器
             self.__heartbeat_timer = 0
             if not available_hosts:
-                self.err_reason = '已尝试所有主机但仍无法连接'
+                self.err_reason = "已尝试所有主机但仍无法连接"
                 break
 
             if host is None or retry <= 0:
                 host = available_hosts.pop()
                 retry = self.max_retry
 
-            port = host['wss_port']
+            port = host["wss_port"]
             protocol = "wss"
             uri = f"{protocol}://{host['host']}:{port}/sub"
             self.__status == self.STATUS_CONNECTING
@@ -728,49 +796,50 @@ class LiveDanmaku(AsyncEvent):
 
             try:
                 async with session.ws_connect(uri) as ws:
-                    @self.on('VERIFICATION_SUCCESSFUL')
+
+                    @self.on("VERIFICATION_SUCCESSFUL")
                     async def on_verification_successful(data):
                         # 新建心跳任务
-                        self.__tasks.append(
-                            asyncio.create_task(self.__heartbeat(ws)))
+                        self.__tasks.append(asyncio.create_task(self.__heartbeat(ws)))
 
                     self.__ws = ws
                     self.logger.debug(f"连接主机成功, 准备发送认证信息")
-                    await self.__send_verify_data(ws, conf['token'])
+                    await self.__send_verify_data(ws, conf["token"])
 
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.BINARY:
-                            self.logger.debug(f'收到原始数据：{msg.data}')
+                            self.logger.debug(f"收到原始数据：{msg.data}")
                             await self.__handle_data(msg.data)
 
                         elif msg.type == aiohttp.WSMsgType.ERROR:
                             self.__status = self.STATUS_ERROR
-                            self.logger.error('出现错误')
+                            self.logger.error("出现错误")
 
                         elif msg.type == aiohttp.WSMsgType.CLOSING:
-                            self.logger.debug('连接正在关闭')
+                            self.logger.debug("连接正在关闭")
                             self.__status = self.STATUS_CLOSING
 
                         elif msg.type == aiohttp.WSMsgType.CLOSED:
-                            self.logger.info('连接已关闭')
+                            self.logger.info("连接已关闭")
                             self.__status = self.STATUS_CLOSED
 
                 # 正常断开情况下跳出循环
                 if self.__status != self.STATUS_CLOSED or self.err_reason:
                     # 非用户手动调用关闭，触发重连
                     raise LiveException(
-                        '非正常关闭连接' if not self.err_reason else self.err_reason)
+                        "非正常关闭连接" if not self.err_reason else self.err_reason
+                    )
                 else:
                     break
 
             except Exception as e:
                 self.logger.exception(e)
                 if retry <= 0 or len(available_hosts) == 0:
-                    self.logger.error('无法连接服务器')
-                    self.err_reason = '无法连接服务器'
+                    self.logger.error("无法连接服务器")
+                    self.err_reason = "无法连接服务器"
                     break
 
-                self.logger.warning(f'将在 {self.retry_after} 秒后重新连接...')
+                self.logger.warning(f"将在 {self.retry_after} 秒后重新连接...")
                 self.__status = self.STATUS_ERROR
                 retry -= 1
                 await asyncio.sleep(self.retry_after)
@@ -784,77 +853,97 @@ class LiveDanmaku(AsyncEvent):
 
         for info in data:
             callback_info = {
-                'room_display_id': self.room_display_id,
-                'room_real_id': self.__room_real_id
+                "room_display_id": self.room_display_id,
+                "room_real_id": self.__room_real_id,
             }
             # 依次处理并调用用户指定函数
-            if info["datapack_type"] == LiveDanmaku.DATAPACK_TYPE_VERIFY_SUCCESS_RESPONSE:
+            if (
+                info["datapack_type"]
+                == LiveDanmaku.DATAPACK_TYPE_VERIFY_SUCCESS_RESPONSE
+            ):
                 # 认证反馈
                 if info["data"]["code"] == 0:
                     # 认证成功反馈
                     self.logger.info("连接服务器并认证成功")
                     self.__status = self.STATUS_ESTABLISHED
-                    callback_info['type'] = 'VERIFICATION_SUCCESSFUL'
-                    callback_info['data'] = None
-                    self.dispatch('VERIFICATION_SUCCESSFUL', callback_info)
-                    self.dispatch('ALL', callback_info)
+                    callback_info["type"] = "VERIFICATION_SUCCESSFUL"
+                    callback_info["data"] = None
+                    self.dispatch("VERIFICATION_SUCCESSFUL", callback_info)
+                    self.dispatch("ALL", callback_info)
 
             elif info["datapack_type"] == LiveDanmaku.DATAPACK_TYPE_HEARTBEAT_RESPONSE:
                 # 心跳包反馈，返回直播间人气
                 self.logger.debug("收到心跳包反馈")
                 # 重置心跳计时器
                 self.__heartbeat_timer = 30.0
-                callback_info["type"] = 'VIEW'
+                callback_info["type"] = "VIEW"
                 callback_info["data"] = info["data"]["view"]
-                self.dispatch('VIEW', callback_info)
-                self.dispatch('ALL', callback_info)
+                self.dispatch("VIEW", callback_info)
+                self.dispatch("ALL", callback_info)
 
             elif info["datapack_type"] == LiveDanmaku.DATAPACK_TYPE_NOTICE:
                 # 直播间弹幕、礼物等信息
                 callback_info["type"] = info["data"]["cmd"]
 
                 # DANMU_MSG 事件名特殊：DANMU_MSG:4:0:2:2:2:0，需取出事件名，暂不知格式
-                if callback_info["type"].find('DANMU_MSG') > -1:
-                    callback_info["type"] = 'DANMU_MSG'
-                    info["data"]["cmd"] = 'DANMU_MSG'
+                if callback_info["type"].find("DANMU_MSG") > -1:
+                    callback_info["type"] = "DANMU_MSG"
+                    info["data"]["cmd"] = "DANMU_MSG"
 
                 callback_info["data"] = info["data"]
                 self.dispatch(callback_info["type"], callback_info)
-                self.dispatch('ALL', callback_info)
+                self.dispatch("ALL", callback_info)
 
             else:
                 self.logger.warning("检测到未知的数据包类型，无法处理")
 
     async def __send_verify_data(self, ws: ClientWebSocketResponse, token: str):
-        verifyData = {"uid": 0, "roomid": self.__room_real_id,
-                      "protover": 3, "platform": "web", "type": 2, "key": token}
+        verifyData = {
+            "uid": 0,
+            "roomid": self.__room_real_id,
+            "protover": 3,
+            "platform": "web",
+            "type": 2,
+            "key": token,
+        }
         data = json.dumps(verifyData).encode()
-        await self.__send(data, self.PROTOCOL_VERSION_HEARTBEAT, self.DATAPACK_TYPE_VERIFY, ws)
+        await self.__send(
+            data, self.PROTOCOL_VERSION_HEARTBEAT, self.DATAPACK_TYPE_VERIFY, ws
+        )
 
     async def __heartbeat(self, ws: ClientWebSocketResponse):
         """
         定时发送心跳包
         """
         HEARTBEAT = self.__pack(
-            b'[object Object]', self.PROTOCOL_VERSION_HEARTBEAT, self.DATAPACK_TYPE_HEARTBEAT)
+            b"[object Object]",
+            self.PROTOCOL_VERSION_HEARTBEAT,
+            self.DATAPACK_TYPE_HEARTBEAT,
+        )
         while True:
             if self.__heartbeat_timer == 0:
                 self.logger.debug("发送心跳包")
                 await ws.send_bytes(HEARTBEAT)
             elif self.__heartbeat_timer <= -30:
                 # 视为已异常断开连接，发布 TIMEOUT 事件
-                self.dispatch('TIMEOUT')
+                self.dispatch("TIMEOUT")
                 break
 
             await asyncio.sleep(1.0)
             self.__heartbeat_timer -= 1
 
-    async def __send(self, data: bytes, protocol_version: int, datapack_type: int, ws: ClientWebSocketResponse):
+    async def __send(
+        self,
+        data: bytes,
+        protocol_version: int,
+        datapack_type: int,
+        ws: ClientWebSocketResponse,
+    ):
         """
         自动打包并发送数据
         """
         data = self.__pack(data, protocol_version, datapack_type)
-        self.logger.debug(f'发送原始数据：{data}')
+        self.logger.debug(f"发送原始数据：{data}")
         await ws.send_bytes(data)
 
     @staticmethod
@@ -886,36 +975,36 @@ class LiveDanmaku(AsyncEvent):
         else:
             realData = data
 
-        if header[2] == LiveDanmaku.PROTOCOL_VERSION_HEARTBEAT and header[3] == LiveDanmaku.DATAPACK_TYPE_HEARTBEAT_RESPONSE:
+        if (
+            header[2] == LiveDanmaku.PROTOCOL_VERSION_HEARTBEAT
+            and header[3] == LiveDanmaku.DATAPACK_TYPE_HEARTBEAT_RESPONSE
+        ):
             realData = realData[16:]
             # 心跳包协议特殊处理
             recvData = {
                 "protocol_version": header[2],
                 "datapack_type": header[3],
-                "data": {
-                    "view": struct.unpack('>I', realData[0:4])[0]
-                }
+                "data": {"view": struct.unpack(">I", realData[0:4])[0]},
             }
             ret.append(recvData)
             return ret
 
         while offset < len(realData):
-            header = struct.unpack(">IHHII", realData[offset:offset + 16])
+            header = struct.unpack(">IHHII", realData[offset : offset + 16])
             length = header[0]
             recvData = {
                 "protocol_version": header[2],
                 "datapack_type": header[3],
-                "data": None
+                "data": None,
             }
-            chunkData = realData[(offset + 16):(offset + length)]
+            chunkData = realData[(offset + 16) : (offset + length)]
             if header[2] == 0:
                 recvData["data"] = json.loads(chunkData.decode())
             elif header[2] == 2:
                 recvData["data"] = json.loads(chunkData.decode())
             elif header[2] == 1:
                 if header[3] == LiveDanmaku.DATAPACK_TYPE_HEARTBEAT_RESPONSE:
-                    recvData["data"] = {
-                        "view": struct.unpack(">I", chunkData)[0]}
+                    recvData["data"] = {"view": struct.unpack(">I", chunkData)[0]}
                 elif header[3] == LiveDanmaku.DATAPACK_TYPE_VERIFY_SUCCESS_RESPONSE:
                     recvData["data"] = json.loads(chunkData.decode())
             ret.append(recvData)
@@ -930,7 +1019,7 @@ async def get_self_info(credential: Credential):
     credential.raise_for_no_sessdata()
 
     api = API["info"]["user_info"]
-    return await request(api['method'], api["url"], credential=credential)
+    return await request(api["method"], api["url"], credential=credential)
 
 
 async def get_self_live_info(credential: Credential):
@@ -941,10 +1030,12 @@ async def get_self_live_info(credential: Credential):
     credential.raise_for_no_sessdata()
 
     api = API["info"]["live_info"]
-    return await request(api['method'], api["url"], credential=credential)
+    return await request(api["method"], api["url"], credential=credential)
 
 
-async def get_self_dahanghai_info(page: int = 1, page_size: int = 10, credential: Credential = None):
+async def get_self_dahanghai_info(
+    page: int = 1, page_size: int = 10, credential: Credential = None
+):
     """
     获取自己开通的大航海信息
 
@@ -967,11 +1058,10 @@ async def get_self_dahanghai_info(page: int = 1, page_size: int = 10, credential
     credential.raise_for_no_sessdata()
 
     api = API["info"]["user_guards"]
-    params = {
-        "page": page,
-        "page_size": page_size
-    }
-    return await request(api['method'], api["url"], params=params, credential=credential)
+    params = {"page": page, "page_size": page_size}
+    return await request(
+        api["method"], api["url"], params=params, credential=credential
+    )
 
 
 async def get_self_bag(credential: Credential):
@@ -982,12 +1072,12 @@ async def get_self_bag(credential: Credential):
     credential.raise_for_no_sessdata()
 
     api = API["info"]["bag_list"]
-    return await request(api['method'], api["url"], credential=credential)
+    return await request(api["method"], api["url"], credential=credential)
 
 
-async def get_gift_config(room_id: int = None,
-                          area_id: int = None,
-                          area_parent_id: int = None):
+async def get_gift_config(
+    room_id: int = None, area_id: int = None, area_parent_id: int = None
+):
     """
     获取所有礼物的信息，包括礼物 id、名称、价格、等级等。
     同时填了 room_id、area_id、area_parent_id，则返回一个较小的 json，只包含该房间、该子区域、父区域的礼物。
@@ -1004,9 +1094,9 @@ async def get_gift_config(room_id: int = None,
         "source": "live",
         "room_id": room_id if room_id is not None else "",
         "area_id": area_id if area_id is not None else "",
-        "area_parent_id": area_parent_id if area_parent_id is not None else ""
+        "area_parent_id": area_parent_id if area_parent_id is not None else "",
     }
-    return await request(api['method'], api["url"], params=params)
+    return await request(api["method"], api["url"], params=params)
 
 
 async def get_area_info():
@@ -1014,10 +1104,12 @@ async def get_area_info():
     获取所有分区信息
     """
     api = API["info"]["area_info"]
-    return await request(api['method'], api["url"])
+    return await request(api["method"], api["url"])
 
 
-async def get_live_followers_info(need_recommend: bool = True, credential: Credential = None):
+async def get_live_followers_info(
+    need_recommend: bool = True, credential: Credential = None
+):
     """
     获取关注列表中正在直播的直播间信息，包括房间直播热度，房间名称及标题，清晰度，是否官方认证等信息。
 
@@ -1030,14 +1122,15 @@ async def get_live_followers_info(need_recommend: bool = True, credential: Crede
     credential.raise_for_no_sessdata()
 
     api = API["info"]["followers_live_info"]
-    params = {
-        "need_recommend": int(need_recommend),
-        "filterRule": 0
-    }
-    return await request(api['method'], api["url"], params=params, credential=credential)
+    params = {"need_recommend": int(need_recommend), "filterRule": 0}
+    return await request(
+        api["method"], api["url"], params=params, credential=credential
+    )
 
 
-async def get_unlive_followers_info(page: int = 1, page_size: int = 30, credential: Credential = None):
+async def get_unlive_followers_info(
+    page: int = 1, page_size: int = 30, credential: Credential = None
+):
     """
     获取关注列表中未在直播的直播间信息，包括上次开播时间，上次开播的类别，直播间公告，是否有录播等。
 
@@ -1055,4 +1148,6 @@ async def get_unlive_followers_info(page: int = 1, page_size: int = 30, credenti
         "page": page,
         "pagesize": page_size,
     }
-    return await request(api['method'], api["url"], params=params, credential=credential)
+    return await request(
+        api["method"], api["url"], params=params, credential=credential
+    )
